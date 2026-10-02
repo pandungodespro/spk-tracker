@@ -1,0 +1,26 @@
+{
+  "name": "SPK Tracker",
+  "short_name": "SPK",
+  "description": "Sistem Tracking Pekerjaan Produksi",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2b6cf6",
+  "theme_color": "#2b6cf6",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/d/1wAhWMqWGlbOe8ifPh9MPTsAF6_vhBLVu=w192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://lh3.googleusercontent.com/d/1wAhWMqWGlbOe8ifPh9MPTsAF6_vhBLVu=w512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
