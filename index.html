@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SPK Tracker">
   <title>SPK Tracker</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=3">
   <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1wAhWMqWGlbOe8ifPh9MPTsAF6_vhBLVu=w192">
   <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1wAhWMqWGlbOe8ifPh9MPTsAF6_vhBLVu=w192">
   <style>
@@ -27,6 +27,8 @@
     #error h2{font-size:18px;margin-bottom:10px;color:#ef4444}
     #error p{font-size:13px;color:#94a3b8;line-height:1.6;max-width:380px}
     #error button{margin-top:20px;padding:10px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+    #updateBar{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:30;background:#16a34a;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);display:none;cursor:pointer}
+    #updateBar.show{display:block}
   </style>
 </head>
 <body>
@@ -45,21 +47,27 @@
     <button onclick="location.reload()">🔄 Muat Ulang</button>
   </div>
 
+  <div id="updateBar" onclick="window.__spkForceReload && window.__spkForceReload()">🎉 Versi baru tersedia — ketuk untuk muat ulang</div>
+
   <iframe id="appFrame"
-          src="https://script.google.com/macros/s/AKfycbwucmYX346bJ747b1FkPZhZMKZWOo6PKNx2blaheRk6qcEJQkruhp6ikUmfeR36gwvpaA/exec"
+          src="https://script.google.com/macros/s/AKfycbzD2qL5jbN7qdAwPGyw1w17oU7LO-43gTyiQGFNHyz5WQBwfgqX2Mt1gEbYS9iuHHbOVA/exec"
           allow="camera; microphone; clipboard-read; clipboard-write; fullscreen; geolocation"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-top-navigation-by-user-activation">
   </iframe>
 
   <script>
     (function(){
+      var APP_VERSION = '3';
+
+      // ===== Loader handler =====
       var frame = document.getElementById('appFrame');
       var loader = document.getElementById('loader');
       var error = document.getElementById('error');
       var errorMsg = document.getElementById('errorMsg');
 
       var loadTimeout = setTimeout(function(){
-        loader.querySelector('p').textContent = 'Masih memuat… Koneksi mungkin lambat.';
+        var p = loader.querySelector('p');
+        if (p) p.textContent = 'Masih memuat… Koneksi mungkin lambat.';
       }, 12000);
 
       frame.addEventListener('load', function(){
@@ -82,27 +90,46 @@
         }
       }, 30000);
 
+      // ===== Service Worker + Auto-Update =====
       if ('serviceWorker' in navigator) {
+        var refreshing = false;
+        var updateBar = document.getElementById('updateBar');
+
+        function forceReload(){
+          var sw = navigator.serviceWorker.controller;
+          if (sw) sw.postMessage({ type: 'SKIP_WAITING' });
+          setTimeout(function(){ location.reload(); }, 200);
+        }
+        window.__spkForceReload = forceReload;
+
         window.addEventListener('load', function(){
-          navigator.serviceWorker.register('sw.js').catch(function(){});
+          navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, { scope: './' })
+            .then(function(reg){
+              // Cek update tiap 30 menit
+              setInterval(function(){ reg.update().catch(function(){}); }, 30 * 60 * 1000);
+
+              reg.addEventListener('updatefound', function(){
+                var newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', function(){
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Ada SW baru siap → tampilkan banner
+                    if (updateBar) updateBar.classList.add('show');
+                  }
+                });
+              });
+            })
+            .catch(function(){});
+
+          // Kalau controller berubah (SW baru ambil alih), reload sekali
+          navigator.serviceWorker.addEventListener('controllerchange', function(){
+            if (refreshing) return;
+            refreshing = true;
+            location.reload();
+          });
         });
       }
-  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzD2qL5jbN7qdAwPGyw1w17oU7LO-43gTyiQGFNHyz5WQBwfgqX2Mt1gEbYS9iuHHbOVA/exec';
-  document.getElementById('appFrame').src = APPS_SCRIPT_URL + '?v=' + Date.now();
-
-  if ('serviceWorker' in navigator) {
-    var hadController = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.register('sw.js').then(function(reg){
-      document.addEventListener('visibilitychange', function(){
-        if (document.visibilityState === 'visible') reg.update();
-      });
-    });
-    navigator.serviceWorker.addEventListener('controllerchange', function(){
-      if (!hadController) { hadController = true; return; }
-      location.reload();
-    });
-  }
-})();
-</script>
+    })();
+  </script>
 </body>
 </html>
