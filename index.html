@@ -87,7 +87,23 @@
           navigator.serviceWorker.register('sw.js').catch(function(){});
         });
       }
-    })();
-  </script>
+<script>
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzD2qL5jbN7qdAwPGyw1w17oU7LO-43gTyiQGFNHyz5WQBwfgqX2Mt1gEbYS9iuHHbOVA/exec';
+  document.getElementById('appFrame').src = APPS_SCRIPT_URL + '?v=' + Date.now();
+
+  if ('serviceWorker' in navigator) {
+    var hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      document.addEventListener('visibilitychange', function(){
+        if (document.visibilityState === 'visible') reg.update();
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if (!hadController) { hadController = true; return; }
+      location.reload();
+    });
+  }
+})();
+</script>
 </body>
 </html>
