@@ -1,8 +1,7 @@
-// Service Worker — SPK Tracker v3
-// Strategi: network-first untuk HTML/manifest/SW, cache-first untuk aset lain
-const CACHE = 'spk-tracker-v3';
+// Service Worker — SPK Tracker v4
+// Strategi: network-first untuk HTML/SW/manifest, cache-first untuk aset lain
+const CACHE = 'spk-tracker-v4';
 const SHELL = ['./', './index.html', './manifest.json'];
-const NETWORK_FIRST = ['/', '/index.html', '/manifest.json', '/sw.js'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
@@ -33,15 +32,15 @@ self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
 
   const path = url.pathname || '/';
-  const isNetworkFirst =
-    NETWORK_FIRST.indexOf(path) >= 0 ||
-    path.endsWith('/index.html') ||
-    e.request.mode === 'navigate';
+  const isHTML = e.request.mode === 'navigate' || path.endsWith('.html') || path === '/' || path.endsWith('/');
+  const isSW = path.endsWith('sw.js');
+  const isManifest = path.endsWith('manifest.json');
+  const isNetworkFirst = isHTML || isSW || isManifest;
 
   if (isNetworkFirst) {
-    // NETWORK-FIRST: coba ambil dari server, fallback ke cache kalau offline
+    // NETWORK-FIRST dengan no-store — selalu cek versi baru
     e.respondWith(
-      fetch(e.request, { cache: 'no-cache' })
+      fetch(e.request, { cache: 'no-store' })
         .then((res) => {
           if (res && res.status === 200) {
             const clone = res.clone();
