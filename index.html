@@ -103,25 +103,46 @@
         window.__spkForceReload = forceReload;
 
         window.addEventListener('load', function(){
-          navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, { scope: './' })
+          navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, {
+            scope: './',
+            updateViaCache: 'none'
+          })
             .then(function(reg){
-              // Cek update tiap 30 menit
-              setInterval(function(){ reg.update().catch(function(){}); }, 30 * 60 * 1000);
+              // Cek update SEKARANG saat boot
+              reg.update().catch(function(){});
 
+              // ★ Cek update tiap 5 MENIT (bukan 30 menit)
+              setInterval(function(){ reg.update().catch(function(){}); }, 5 * 60 * 1000);
+
+              // Deteksi SW baru
               reg.addEventListener('updatefound', function(){
                 var newWorker = reg.installing;
                 if (!newWorker) return;
                 newWorker.addEventListener('statechange', function(){
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Ada SW baru siap → tampilkan banner
+                    // SW baru siap → tampilkan banner
                     if (updateBar) updateBar.classList.add('show');
                   }
                 });
               });
+
+              // Kalau sudah ada SW waiting dari sesi sebelumnya → tampilkan banner
+              if (reg.waiting) {
+                if (updateBar) updateBar.classList.add('show');
+              }
             })
             .catch(function(){});
 
-          // Kalau controller berubah (SW baru ambil alih), reload sekali
+          // ★ Cek update saat PWA kembali ke foreground (mobile-friendly)
+          document.addEventListener('visibilitychange', function(){
+            if (document.visibilityState === 'visible') {
+              navigator.serviceWorker.getRegistration().then(function(reg){
+                if (reg) reg.update().catch(function(){});
+              }).catch(function(){});
+            }
+          });
+
+          // Kalau controller berubah (SW baru ambil alih), reload otomatis
           navigator.serviceWorker.addEventListener('controllerchange', function(){
             if (refreshing) return;
             refreshing = true;
