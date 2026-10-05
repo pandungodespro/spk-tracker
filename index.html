@@ -29,6 +29,13 @@
     #error button{margin-top:20px;padding:10px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
     #updateBar{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:30;background:#16a34a;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);display:none;cursor:pointer}
     #updateBar.show{display:block}
+    #updateBar{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:30;
+  background:#16a34a;color:#fff;padding:10px 20px;border-radius:24px;
+  font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);
+  display:none;cursor:pointer;white-space:nowrap;
+}
+#updateBar.show{display:block}
   </style>
 </head>
 <body>
@@ -57,7 +64,7 @@
 
   <script>
     (function(){
-      var APP_VERSION = '3';
+      var APP_VERSION = '4';
 
       // ===== Loader handler =====
       var frame = document.getElementById('appFrame');
